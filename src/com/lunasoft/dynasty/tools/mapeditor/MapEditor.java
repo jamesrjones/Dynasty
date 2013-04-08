@@ -8,6 +8,7 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -16,45 +17,72 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import com.lunasoft.dynasty.tools.mapeditor.TileData.TerrainType;
+
 public class MapEditor {
+
+	private GameMap gameMap;
+	private HexMapCanvas hexMapCanvas;
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		new MapEditor().run();
+	}
+
+	private void run() {
 		Display display = new Display();
-    final Shell shell = new Shell(display);
+    Shell shell = new Shell(display);
+    createMainMenu(shell);
+    layoutMainShell(shell);
+
+	  shell.open();
+	  while (!shell.isDisposed()) {
+	    if (!display.readAndDispatch()) {
+	    	display.sleep();
+	    }
+	  }
+	  display.dispose ();
+	}
+
+	private void createMainMenu(final Shell shell) {
     Menu menu = new Menu(shell, SWT.BAR);
     shell.setMenuBar(menu);
     MenuItem fileItem = new MenuItem(menu, SWT.CASCADE);
     fileItem.setText("&File");
     Menu submenu = new Menu(shell, SWT.DROP_DOWN);
     fileItem.setMenu(submenu);
-    MenuItem item = new MenuItem(submenu, SWT.PUSH);
-    item.setText("Create from DEM");
-    item.addSelectionListener(new SelectionAdapter() {
+
+    MenuItem createFromDemItem = new MenuItem(submenu, SWT.PUSH);
+    createFromDemItem.setText("Create from DEM...");
+    createFromDemItem.addSelectionListener(new SelectionAdapter() {
     	@Override
     	public void widgetSelected(SelectionEvent e) {
-//    		CreateMapFromDemDialog dialog = new CreateMapFromDemDialog(shell);
-//    		dialog.setText("Create Map from DEM");
-//    		GameMap map = dialog.open();
     		WizardDialog dialog = new WizardDialog(shell, new CreateMapFromDemWizard());
     		dialog.open();
     	}
     });
-//    shell.setLayout(new FillLayout());
-//    shell.addControlListener(new ControlAdapter() {
-//    	public void controlResized(ControlEvent e) {
-//    		label.setBounds(shell.getClientArea());
-//    	}
-//    });
-    shell.open();
-    while (!shell.isDisposed()) {
-      if (!display.readAndDispatch()) {
-      	display.sleep();
-      }
-    }
-    display.dispose ();
+
+    MenuItem createBlankMapItem = new MenuItem(submenu, SWT.PUSH);
+    createBlankMapItem.setText("Create new...");
+    createBlankMapItem.addSelectionListener(new SelectionAdapter() {
+    	@Override
+    	public void widgetSelected(SelectionEvent e) {
+//    		WizardDialog dialog = new WizardDialog(shell, new CreateBlankMapWizard());
+//    		dialog.open();
+    		setMap(GameMap.ofTerrain(false, 10, 10, TerrainType.OCEAN));
+    	}
+    });
 	}
 
+	private void layoutMainShell(final Shell shell) {
+//		shell.setLayout(new GridLayout(2, false));
+		shell.setLayout(new FillLayout());
+		hexMapCanvas = new HexMapCanvas(shell, SWT.PUSH);
+	}
+
+	private void setMap(GameMap gameMap) {
+		hexMapCanvas.setGameMap(gameMap);
+	}
 }

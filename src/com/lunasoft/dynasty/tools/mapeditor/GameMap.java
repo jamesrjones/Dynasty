@@ -41,4 +41,15 @@ public class GameMap implements Serializable {
 	public TileData getTile(int i, int j) {
 		return data[i][j];
 	}
+
+	public static GameMap ofTerrain(boolean isWrapping, int width, int height,
+			TileData.TerrainType terrainType) {
+		GameMap gameMap = new GameMap(isWrapping, width, height);
+		for (int i = 0; i < width; i++) {
+			for (int j = 0; j < height; j++) {
+				gameMap.setTile(i, j, new TileData(terrainType));
+			}
+		}
+		return gameMap;
+	}
 }
