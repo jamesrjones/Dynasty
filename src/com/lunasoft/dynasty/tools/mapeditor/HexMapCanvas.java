@@ -85,6 +85,10 @@ public class HexMapCanvas extends Canvas {
 		update();
 	}
 
+	public GameMap getGameMap() {
+		return gameMap;
+	}
+
 	public void setSelectedTerrainType(TerrainType terrainType) {
 		selectedTerrainType = terrainType;
 	}
