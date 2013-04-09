@@ -1,5 +1,6 @@
 package com.lunasoft.dynasty.tools.mapeditor;
 
+import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ControlAdapter;
@@ -9,6 +10,8 @@ import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Label;
@@ -69,9 +72,11 @@ public class MapEditor {
     createBlankMapItem.addSelectionListener(new SelectionAdapter() {
     	@Override
     	public void widgetSelected(SelectionEvent e) {
-//    		WizardDialog dialog = new WizardDialog(shell, new CreateBlankMapWizard());
-//    		dialog.open();
-    		setMap(GameMap.ofTerrain(false, 10, 10, TerrainType.OCEAN));
+    		CreateBlankMapDialog dialog = new CreateBlankMapDialog(shell);
+    		if (Window.OK == dialog.open()) {
+    			setMap(GameMap.ofTerrain(false, dialog.getWidth(), dialog.getHeight(),
+    					TerrainType.OCEAN));
+    		}
     	}
     });
 	}
@@ -79,7 +84,30 @@ public class MapEditor {
 	private void layoutMainShell(final Shell shell) {
 //		shell.setLayout(new GridLayout(2, false));
 		shell.setLayout(new FillLayout());
+		Composite controls = new Composite(shell, SWT.PUSH);
+		controls.setLayout(new GridLayout(2, false));
+
+		addTerrainButton(controls, "Ocean", TerrainType.OCEAN).setSelection(true);
+		addTerrainButton(controls, "Plains", TerrainType.PLAINS);
+		addTerrainButton(controls, "Hills", TerrainType.HILLS);
+		addTerrainButton(controls, "Mountains", TerrainType.MOUNTAINS);
+
 		hexMapCanvas = new HexMapCanvas(shell, SWT.PUSH);
+	}
+
+	private Button addTerrainButton(Composite parent, String labelText,
+			final TerrainType terrainType) {
+		Label label = new Label(parent, SWT.PUSH);
+		label.setText(labelText);
+		Button button = new Button(parent, SWT.PUSH | SWT.RADIO);
+		button.setText(labelText);
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				hexMapCanvas.setSelectedTerrainType(terrainType);
+			}
+		});
+		return button;
 	}
 
 	private void setMap(GameMap gameMap) {
