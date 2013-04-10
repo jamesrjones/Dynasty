@@ -1,5 +1,7 @@
 package com.lunasoft.dynasty.tools.mapeditor;
 
+import com.google.common.base.Objects;
+
 class HexDimensions {
 	private final double inRadius;
 	private final double circumRadius; // also equal to side length
@@ -27,5 +29,13 @@ class HexDimensions {
 
 	public double getCircumRadius() {
 		return circumRadius;
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.add("inRadius", inRadius)
+				.add("circumRadius", circumRadius)
+				.toString();
 	}
 }

@@ -38,6 +38,7 @@ import org.eclipse.swt.widgets.Scale;
 import org.eclipse.swt.widgets.Tracker;
 
 import com.google.common.base.Preconditions;
+import com.lunasoft.dynasty.tools.mapeditor.Rectangles.ScaledRectangle;
 
 public class CreateMapFromDemWizard extends Wizard implements IPageChangingListener {
 
@@ -46,6 +47,9 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 	private short[][] heights = null;
 	private Image fullSizeImage;
 	private Rectangle selectedBounds;
+	private double hexSize = 10.0;
+	private boolean canFinish = true;
+	private GameMap gameMap = null;
 
 	public void addPages() {
 		addPage(new SelectFilePage("Select File"));
@@ -57,12 +61,30 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 
 	@Override
 	public boolean performFinish() {
-		// TODO Auto-generated method stub
-		return false;
+		// extract subset of heights, pass to DemHexifier
+		short[][] selectedHeights = new short[selectedBounds.width][selectedBounds.height];
+		for (int i = 0; i < selectedBounds.width; i++) {
+			for (int j = 0; j < selectedBounds.height; j++) {
+				selectedHeights[i][j] = heights[j + selectedBounds.y][i + selectedBounds.x];
+			}
+		}
+		DemHexifier hexifier = new DemHexifier(selectedHeights,
+				HexDimensions.withInRadius(hexSize));
+		gameMap = hexifier.hexify();
+		return true;
+	}
+
+	@Override
+	public boolean canFinish() {
+		return canFinish;
 	}
 
 	FileMetadata getFileMetadata() {
 		return fileMetadata;
+	}
+
+	public GameMap getGameMap() {
+		return gameMap;
 	}
 
 	void setFileMetadata(FileMetadata fileMetadata) {
@@ -345,7 +367,8 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 		void showCanvas() {
 			getShell().getDisplay().asyncExec(new Runnable() {
 				public void run() {
-					resizedImage = sizeImageToFit(fullSizeImage, imageCanvas.getClientArea());
+					resizedImage = sizeImageToFit(fullSizeImage, Rectangles.sizeToFit(
+							fullSizeImage.getBounds(), imageCanvas.getClientArea()));
 					imageCanvas.redraw();
 					imageCanvas.update();
 				}
@@ -357,7 +380,7 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 		private Canvas imageCanvas;
 		private Image resizedImage;
 		private Image selectedImage;
-		private double hexSize;
+		private double hexGridScale;
 
 		protected HexifyPage(String pageName) {
 			super(pageName);
@@ -371,8 +394,8 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 
 			final Scale scale = new Scale(pageControl, SWT.PUSH | SWT.VERTICAL);
 			scale.setLayoutData(new GridData(SWT.CENTER, SWT.FILL, false, false));
-			scale.setMaximum(20);
-			scale.setMinimum(2);
+			scale.setMaximum(100);
+			scale.setMinimum(20);
 			scale.addSelectionListener(new SelectionAdapter() {
 				public void widgetSelected(SelectionEvent e) {
 					hexSize = scale.getSelection();
@@ -396,12 +419,15 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 						gc.dispose();
 					}
 					if (resizedImage == null) {
-						resizedImage = sizeImageToFit(selectedImage, imageCanvas.getClientArea());
-						hexSize = 10.0;
+						ScaledRectangle scaledRectangle = Rectangles.sizeToFit(selectedImage.getBounds(),
+								imageCanvas.getClientArea());
+						resizedImage = sizeImageToFit(selectedImage, scaledRectangle);
+						hexGridScale = scaledRectangle.getScale();
+						hexSize = 50.0;
 						scale.setSelection((int) hexSize);
 					}
 					e.gc.drawImage(resizedImage, 0, 0);
-					drawHexGrid(e.gc, hexSize, resizedImage.getBounds());
+					drawHexGrid(e.gc, hexSize * hexGridScale, resizedImage.getBounds());
 				}
 			});
 
@@ -456,42 +482,29 @@ public class CreateMapFromDemWizard extends Wizard implements IPageChangingListe
 		imageLoader.start();
 	}
 
-	private Image sizeImageToFit(Image originalImage, Rectangle rect) {
-		Rectangle originalBounds = originalImage.getBounds();
-		System.out.println("Fit rect: " + rect);
-		double scaleX = ((double)rect.width) / originalBounds.width;
-		System.out.println("ScaleX: " + scaleX);
-		double scaleY = ((double)rect.height) / originalBounds.height;
-		System.out.println("ScaleY: " + scaleY);
-		double scale = Math.min(scaleX, scaleY);
-		System.out.println("Scale: " + scale);
-		System.out.format("Scaling from %d x %d to %d x %d%n",
-				fileMetadata.ncols, fileMetadata.nrows,
-				(int) (scale * originalBounds.width), (int) (scale * originalBounds.height));
+	private Image sizeImageToFit(Image originalImage, ScaledRectangle scaledRectangle) {
+		int width = scaledRectangle.getRectangle().width;
+		int height = scaledRectangle.getRectangle().height;
 		return new Image(getShell().getDisplay(),
-				originalImage.getImageData().scaledTo((int) (scale * originalBounds.width),
-						(int) (scale * originalBounds.height)));
+				originalImage.getImageData().scaledTo(width, height));
 	}
 
 	private void drawHexGrid(GC gc, double hexSize, Rectangle bounds) {
-		HexDimensions hexDimensions = HexDimensions.withCircumRadius(hexSize);
+		HexDimensions hexDimensions = HexDimensions.withInRadius(hexSize);
 		Path path = new Path(gc.getDevice());
 		gc.setForeground(gc.getDevice().getSystemColor(SWT.COLOR_GRAY));
 		gc.setClipping(bounds);
-		int imax = 1 + (int) (bounds.width / hexDimensions.getInRadius() / 2);
-		int jmax = 1 + (int) (bounds.height / hexDimensions.getInRadius() / Math.sqrt(3));
+		HexGridDimensions gridDimensions = HexGridDimensions.coveringArea(hexDimensions,
+				bounds.width, bounds.height);
+		int imax = gridDimensions.getWidth();
+		int jmax = gridDimensions.getHeight();
 		for (int i = 0; i < imax; i++) {
 			for (int j = 0; j < jmax; j++) {
-				float cx = (float) ((i * 2 + 1) * hexDimensions.getInRadius());
-				float cy = (float) ((j * Math.sqrt(3) + 1) * hexDimensions.getInRadius());
-				if (j % 2 == 1) {
-					cx += hexDimensions.getInRadius();
-				}
-				drawHex(path, hexDimensions, cx, cy);
+				double[] coords = gridDimensions.getCenter(i, j);
+				drawHex(path, hexDimensions, (float) coords[0], (float) coords[1]);
 			}
 		}
 		gc.drawPath(path);
-		
 	}
 
 	private void drawHex(Path path, HexDimensions hexDimensions, float cx, float cy) {

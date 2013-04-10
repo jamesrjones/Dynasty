@@ -2,6 +2,8 @@ package com.lunasoft.dynasty.tools.mapeditor;
 
 import org.eclipse.swt.graphics.Point;
 
+import com.google.common.base.Objects;
+
 public class HexGridDimensions {
 
 	private final int width;
@@ -16,6 +18,16 @@ public class HexGridDimensions {
 		this.hexDimensions = hexDimensions;
 	}
 
+	// Returns a HexGridDimensions that covers an area of size width x height,
+	// i.e. it will have getTotalWidth() >= width and getTotalHeight() >= height.
+	public static HexGridDimensions coveringArea(HexDimensions hexDimensions,
+			double width, double height) {
+		double minWidth = (width / hexDimensions.getInRadius() - 1) / 2;
+		double minHeight = (height / hexDimensions.getCircumRadius() - 0.5) / 1.5;
+		return new HexGridDimensions(1 + (int) minWidth, 1 + (int) minHeight,
+				hexDimensions);
+	}
+
 	public double[] getCenter(int i, int j) {
 		double cx = (2 * i + 1) * hexDimensions.getInRadius();
 		double cy = (1.5 * j + 1) * hexDimensions.getCircumRadius();
@@ -23,6 +35,14 @@ public class HexGridDimensions {
 			cx += hexDimensions.getInRadius();
 		}
 		return new double[] {cx, cy};
+	}
+
+	public int getWidth() {
+		return width;
+	}
+
+	public int getHeight() {
+		return height;
 	}
 
 	public double getTotalWidth() {
@@ -79,5 +99,14 @@ public class HexGridDimensions {
 			return null;
 		}
 		return new Point(i, j);
+	}
+
+	@Override
+	public String toString() {
+		return Objects.toStringHelper(this)
+				.add("width", width)
+				.add("height", height)
+				.add("dimensions", hexDimensions)
+				.toString();
 	}
 }

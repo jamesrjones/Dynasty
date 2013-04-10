@@ -48,7 +48,7 @@ public class MapEditor {
 	    	display.sleep();
 	    }
 	  }
-	  display.dispose ();
+	  display.dispose();
 	}
 
 	private void createMainMenu(final Shell shell) {
@@ -64,8 +64,11 @@ public class MapEditor {
     createFromDemItem.addSelectionListener(new SelectionAdapter() {
     	@Override
     	public void widgetSelected(SelectionEvent e) {
-    		WizardDialog dialog = new WizardDialog(shell, new CreateMapFromDemWizard());
-    		dialog.open();
+    		CreateMapFromDemWizard wizard = new CreateMapFromDemWizard();
+    		WizardDialog dialog = new WizardDialog(shell, wizard);
+    		if (Window.OK == dialog.open()) {
+    			hexMapCanvas.setGameMap(wizard.getGameMap());
+    		}
     	}
     });
 
