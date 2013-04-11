@@ -92,7 +92,9 @@ public class HexGridDimensions {
 		if (j % 2 == 0) {
 			i = iGrid / 2;
 		} else {
-			i = (iGrid - 1) / 2;
+			if (iGrid >= 1) {
+				i = (iGrid - 1) / 2;
+			}
 		}
 
 		if (i < 0 || i >= width || j < 0 || j >= height) {
