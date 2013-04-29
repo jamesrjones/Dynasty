@@ -1,0 +1,34 @@
+// Protocol buffer definition for vector-based graphics
+
+package mapeditor.icons;
+
+option java_package = "com.lunasoft.dynasty.tools.mapeditor.icons";
+option java_outer_classname = "IconProtos";
+
+// Can be used as part of another element or an element on its own
+// if used as a standalone element, will render as a single pixel
+// at any scale.
+message Point {
+  required double x = 1;
+  required double y = 2;
+}
+
+message Circle {
+  required Point center = 1;
+  required double radius = 2;
+}
+
+message Ellipse {
+  required PointPB center = 1;
+  required semimajor = 2;
+  required semiminor = 3;
+
+  // angle is measured clockwise in radians
+  // an angle of 0 aligns the semimajor axis horizontally
+  required angle = 4 [default = 0.0];
+}
+
+message Line {
+  required Point start = 1;
+  required Point end = 2;
+}

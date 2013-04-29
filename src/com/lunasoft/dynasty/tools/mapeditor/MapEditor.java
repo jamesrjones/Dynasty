@@ -10,11 +10,14 @@ import java.io.ObjectOutputStream;
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.PaintEvent;
+import org.eclipse.swt.events.PaintListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
@@ -23,11 +26,13 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
-import com.lunasoft.dynasty.tools.mapeditor.TileData.TerrainType;
+import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
+import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
 
 public class MapEditor {
 
 	private HexMapCanvas hexMapCanvas;
+	private Canvas previewCanvas;
 
 	/**
 	 * @param args
@@ -80,7 +85,7 @@ public class MapEditor {
     		CreateBlankMapDialog dialog = new CreateBlankMapDialog(shell);
     		if (Window.OK == dialog.open()) {
     			setMap(GameMap.ofTerrain(false, dialog.getWidth(), dialog.getHeight(),
-    					TerrainType.OCEAN));
+    					ReliefType.WATER));
     		}
     	}
     });
@@ -135,30 +140,81 @@ public class MapEditor {
 	}
 
 	private void layoutMainShell(final Shell shell) {
-		shell.setLayout(new GridLayout(2, false));
-		Composite controls = new Composite(shell, SWT.PUSH);
-		controls.setLayoutData(new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false));
-		controls.setLayout(new GridLayout(2, false));
+		shell.setLayout(new GridLayout(3, false));
 
-		addTerrainButton(controls, "Ocean", TerrainType.OCEAN).setSelection(true);
-		addTerrainButton(controls, "Plains", TerrainType.PLAINS);
-		addTerrainButton(controls, "Hills", TerrainType.HILLS);
-		addTerrainButton(controls, "Mountains", TerrainType.MOUNTAINS);
+		Composite reliefControls = new Composite(shell, SWT.NONE);
+		reliefControls.setLayoutData(new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false));
+		reliefControls.setLayout(new GridLayout(1, false));
 
-		hexMapCanvas = new HexMapCanvas(shell, SWT.PUSH);
+		addReliefButton(reliefControls, "Water", ReliefType.WATER).setSelection(true);
+		addReliefButton(reliefControls, "Plains", ReliefType.PLAINS);
+		addReliefButton(reliefControls, "Hills", ReliefType.HILLS);
+		addReliefButton(reliefControls, "Mountains", ReliefType.MOUNTAINS);
+
+		Composite vegetationControls = new Composite(shell, SWT.NONE);
+		vegetationControls.setLayoutData(new GridData(SWT.BEGINNING, SWT.BEGINNING, false, false));
+		vegetationControls.setLayout(new GridLayout(1, false));
+
+		addVegetationButton(vegetationControls, "None", VegetationType.NONE).setSelection(true);
+		addVegetationButton(vegetationControls, "Grassland", VegetationType.GRASSLAND);
+
+//		new Label(reliefControls, SWT.PUSH | SWT.SEPARATOR | SWT.HORIZONTAL)
+//				.setLayoutData(new GridDataBuilder().withHorizontalSpan(2).build());
+
+// TODO: do this later
+//		addMoreRowsButton(controls, "+2 Rows Top", false);
+//		addMoreRowsButton(controls, "+2 Rows Bottom", true);
+
+		hexMapCanvas = new HexMapCanvas(shell, SWT.NONE);
 		hexMapCanvas.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		previewCanvas = new Canvas(shell, SWT.NONE);
+		previewCanvas.setLayoutData(new GridDataBuilder().withHorizontalSpan(2).build());
+
+		previewCanvas.addPaintListener(new PaintListener() {
+			@Override
+			public void paintControl(PaintEvent e) {
+				hexMapCanvas.previewHex(e.gc, previewCanvas.getBounds());
+			}
+		});
 	}
 
-	private Button addTerrainButton(Composite parent, String labelText,
-			final TerrainType terrainType) {
-		Label label = new Label(parent, SWT.PUSH);
-		label.setText(labelText);
-		Button button = new Button(parent, SWT.PUSH | SWT.RADIO);
+	private Button addReliefButton(Composite parent, String labelText,
+			final ReliefType reliefType) {
+		Button button = new Button(parent, SWT.RADIO);
 		button.setText(labelText);
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				hexMapCanvas.setSelectedTerrainType(terrainType);
+				hexMapCanvas.setSelectedReliefType(reliefType);
+				previewCanvas.redraw();
+			}
+		});
+		return button;
+	}
+
+	private Button addVegetationButton(Composite parent, String labelText,
+			final VegetationType vegetationType) {
+		Button button = new Button(parent, SWT.RADIO);
+		button.setText(labelText);
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				hexMapCanvas.setSelectedVegetationType(vegetationType);
+				previewCanvas.redraw();
+			}
+		});
+		return button;
+	}
+
+	private Button addMoreRowsButton(Composite parent, String labelText,
+			final boolean addToBottom) {
+		Button button = new Button(parent, SWT.PUSH);
+		button.setText(labelText);
+		button.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				// implement later
 			}
 		});
 		return button;

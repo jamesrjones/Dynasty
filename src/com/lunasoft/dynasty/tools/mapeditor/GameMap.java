@@ -43,7 +43,7 @@ public class GameMap implements Serializable {
 	}
 
 	public static GameMap ofTerrain(boolean isWrapping, int width, int height,
-			TileData.TerrainType terrainType) {
+			TileData.ReliefType terrainType) {
 		GameMap gameMap = new GameMap(isWrapping, width, height);
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {

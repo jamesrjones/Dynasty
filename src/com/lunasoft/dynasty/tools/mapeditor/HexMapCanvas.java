@@ -11,10 +11,14 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.graphics.Path;
 import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.widgets.Canvas;
 import org.eclipse.swt.widgets.Composite;
 
-import com.lunasoft.dynasty.tools.mapeditor.TileData.TerrainType;
+import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
+import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
+import com.lunasoft.dynasty.tools.mapeditor.icons.BaseIcon;
+import com.lunasoft.dynasty.tools.mapeditor.icons.Grassland;
 
 public class HexMapCanvas extends Canvas {
 	private GameMap gameMap;
@@ -23,10 +27,12 @@ public class HexMapCanvas extends Canvas {
 	private Color cursorColor;
 	private Color grasslandColor;
 	private Color hillsColor;
-	private Color oceanColor;
+	private Color mountainsColor;
+	private Color waterColor;
 	private Image image;
 	private Point cursor;
-	private TerrainType selectedTerrainType = TerrainType.OCEAN;
+	private ReliefType selectedReliefType = ReliefType.WATER;
+	private VegetationType selectedVegetationType = VegetationType.NONE;
 
 	public HexMapCanvas(Composite parent, int style) {
 		super(parent, style);
@@ -34,7 +40,8 @@ public class HexMapCanvas extends Canvas {
 		cursorColor = getDisplay().getSystemColor(SWT.COLOR_WHITE);
 		grasslandColor = getDisplay().getSystemColor(SWT.COLOR_GREEN);
 		hillsColor = getDisplay().getSystemColor(SWT.COLOR_GRAY);
-		oceanColor = getDisplay().getSystemColor(SWT.COLOR_BLUE);
+		mountainsColor = getDisplay().getSystemColor(SWT.COLOR_DARK_GRAY);
+		waterColor = getDisplay().getSystemColor(SWT.COLOR_BLUE);
 		addPaintListener(new PaintListener() {
 			@Override
 			public void paintControl(PaintEvent e) {
@@ -44,7 +51,8 @@ public class HexMapCanvas extends Canvas {
 				e.gc.drawImage(image, 0, 0);
 				if (cursor != null) {
 					double[] center = hexGridDimensions.getCenter(cursor.x, cursor.y);
-					Path path = getHexPath(e.gc, (float) center[0], (float) center[1]);
+					Path path = getHexPath(e.gc, hexGridDimensions.getHexDimensions(),
+							(float) center[0], (float) center[1]);
 					e.gc.setForeground(cursorColor);
 					e.gc.drawPath(path);
 				}
@@ -68,8 +76,7 @@ public class HexMapCanvas extends Canvas {
 					return;
 				}
 				Point hex = hexGridDimensions.getHexContaining(e.x, e.y);
-				System.out.println("button pushed: " + e.button);
-				gameMap.setTile(hex.x, hex.y, new TileData(selectedTerrainType));
+				gameMap.setTile(hex.x, hex.y, new TileData(selectedReliefType));
 				image = createImage(); // a bit heavy; maybe recreate just the bit that's changing
 				redraw();
 			}
@@ -89,8 +96,12 @@ public class HexMapCanvas extends Canvas {
 		return gameMap;
 	}
 
-	public void setSelectedTerrainType(TerrainType terrainType) {
-		selectedTerrainType = terrainType;
+	public void setSelectedReliefType(ReliefType terrainType) {
+		selectedReliefType = terrainType;
+	}
+
+	public void setSelectedVegetationType(VegetationType vegetationType) {
+		selectedVegetationType = vegetationType;
 	}
 
 	private Image createImage() {
@@ -108,36 +119,54 @@ public class HexMapCanvas extends Canvas {
 			for (int j = 0; j < gameMap.getHeight(); j++) {
 				double[] center = hexGridDimensions.getCenter(i, j);
 				TileData tileData = gameMap.getTile(i, j);
-				drawHex(gc, getTerrainColor(tileData.getTerrainType()), (float) center[0],
-						(float) center[1]);
+				drawHex(gc, tileData, hexGridDimensions.getHexDimensions(),
+						(float) center[0], (float) center[1]);
 			}
 		}
 		return image;
 	}
 
-	private Color getTerrainColor(TerrainType terrainType) {
-		switch (terrainType) {
-		case OCEAN:
-			return oceanColor;
+	private Color getTerrainColor(ReliefType reliefType) {
+		switch (reliefType) {
+		case WATER:
+			return waterColor;
 		case HILLS:
-		case MOUNTAINS:
 			return hillsColor;
+		case MOUNTAINS:
+			return mountainsColor;
 		case PLAINS:
 			return grasslandColor;
 		}
-		return null;
+		throw new IllegalStateException("Unknown relief type: " + reliefType);
 	}
 
-	private void drawHex(GC gc, Color color, float cx, float cy) {
-		Path path = getHexPath(gc, cx, cy);
-		gc.setBackground(color);
+	private BaseIcon getIcon(VegetationType vegetationType) {
+		switch (vegetationType) {
+		case NONE:
+			return null;
+		case GRASSLAND:
+			return new Grassland();
+		}
+		throw new IllegalStateException("Unknown vegetation type: " + vegetationType);
+	}
+
+	private void drawHex(GC gc, TileData tileData, HexDimensions hexDimensions,
+			float cx, float cy) {
+		Path path = getHexPath(gc, hexDimensions, cx, cy);
+		gc.setBackground(getTerrainColor(tileData.getReliefType()));
 		gc.fillPath(path);
+		BaseIcon icon = getIcon(tileData.getVegetationType());
+		if (icon != null) {
+			icon.draw(gc, cx - 0.5 * hexDimensions.getInRadius(),
+					cy - 0.5 * hexDimensions.getInRadius(), hexDimensions.getInRadius());
+		}
 	}
 
-	private Path getHexPath(GC gc, float cx, float cy) {
+	private Path getHexPath(GC gc, HexDimensions hexDimensions,
+			float cx, float cy) {
 		Path path = new Path(gc.getDevice());
-		float circumRadius = (float) hexGridDimensions.getHexDimensions().getCircumRadius();
-		float inRadius = (float) hexGridDimensions.getHexDimensions().getInRadius();
+		float circumRadius = (float) hexDimensions.getCircumRadius();
+		float inRadius = (float) hexDimensions.getInRadius();
 		path.moveTo(cx, cy - circumRadius);
 		path.lineTo(cx + inRadius, cy - 0.5f * circumRadius);
 		path.lineTo(cx + inRadius, cy + 0.5f * circumRadius);
@@ -146,5 +175,13 @@ public class HexMapCanvas extends Canvas {
 		path.lineTo(cx - inRadius, cy - 0.5f * circumRadius);
 		path.lineTo(cx, cy - circumRadius);
 		return path;
+	}
+
+	public void previewHex(GC gc, Rectangle bounds) {
+		TileData tileData = new TileData(selectedReliefType, selectedVegetationType,
+				null, false);
+		drawHex(gc, tileData,
+				HexDimensions.withCircumRadius(bounds.width / 2),
+				bounds.width / 2, bounds.height / 2);
 	}
 }

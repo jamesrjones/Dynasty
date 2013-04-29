@@ -1,6 +1,6 @@
 package com.lunasoft.dynasty.tools.mapeditor;
 
-import com.lunasoft.dynasty.tools.mapeditor.TileData.TerrainType;
+import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
 
 class DemHexifier {
 
@@ -72,9 +72,6 @@ class DemHexifier {
 			int maxRow) {
 		System.out.format("col = %d: row = %d-%d%n", col, minRow, maxRow);
 		for (int row = minRow; row <= maxRow; row++) {
-//			if (row < 0 || row >= numRows) {
-//				continue;
-//			}
 			if (heights[col][row] > 0) {
 				accumulator.add(heights[col][row]);
 			} else {
@@ -83,11 +80,11 @@ class DemHexifier {
 		}
 	}
 
-	private TerrainType getTerrainType(DataAccumulator accumulator) {
-		if (accumulator.getFractionReal() > 0.5) {
-			return TerrainType.PLAINS;
+	private ReliefType getTerrainType(DataAccumulator accumulator) {
+		if (accumulator.getFractionReal() > 0.3) {
+			return ReliefType.PLAINS;
 		}
-		return TerrainType.OCEAN;
+		return ReliefType.WATER;
 	}
 
 	private static class DataAccumulator {
