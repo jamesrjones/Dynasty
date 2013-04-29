@@ -76,7 +76,8 @@ public class HexMapCanvas extends Canvas {
 					return;
 				}
 				Point hex = hexGridDimensions.getHexContaining(e.x, e.y);
-				gameMap.setTile(hex.x, hex.y, new TileData(selectedReliefType));
+				gameMap.setTile(hex.x, hex.y, new TileData(selectedReliefType,
+						selectedVegetationType));
 				image = createImage(); // a bit heavy; maybe recreate just the bit that's changing
 				redraw();
 			}

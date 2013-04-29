@@ -35,8 +35,8 @@ public class TileData implements Serializable {
 		this.developed = developed;
 	}
 
-	public TileData(ReliefType reliefType) {
-		this(reliefType, null, null, false);
+	public TileData(ReliefType reliefType, VegetationType vegetationType) {
+		this(reliefType, vegetationType, null, false);
 	}
 
 	public ReliefType getReliefType() {

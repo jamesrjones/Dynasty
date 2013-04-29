@@ -2,6 +2,8 @@ package com.lunasoft.dynasty.tools.mapeditor;
 
 import java.io.Serializable;
 
+import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
+
 /**
  * Represents a game map organized as a grid of hexes. The map may wrap or not.
  * If it wraps, it will wrap only in the horizontal direction.
@@ -47,7 +49,7 @@ public class GameMap implements Serializable {
 		GameMap gameMap = new GameMap(isWrapping, width, height);
 		for (int i = 0; i < width; i++) {
 			for (int j = 0; j < height; j++) {
-				gameMap.setTile(i, j, new TileData(terrainType));
+				gameMap.setTile(i, j, new TileData(terrainType, VegetationType.NONE));
 			}
 		}
 		return gameMap;

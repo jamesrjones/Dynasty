@@ -1,6 +1,7 @@
 package com.lunasoft.dynasty.tools.mapeditor;
 
 import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
+import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
 
 class DemHexifier {
 
@@ -56,7 +57,8 @@ class DemHexifier {
 					assert(distance(i, j, col, maxRow) <= hexDimensions.getCircumRadius());
 					processColumn(accumulator, col, minRow, maxRow);
 				}
-				gameMap.setTile(i, j, new TileData(getTerrainType(accumulator)));
+				gameMap.setTile(i, j, new TileData(getTerrainType(accumulator),
+						VegetationType.NONE));
 			}
 		}
 		return gameMap;
