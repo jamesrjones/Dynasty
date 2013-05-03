@@ -29,6 +29,7 @@ import org.eclipse.swt.widgets.Shell;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
+import com.lunasoft.common.swt.GridDataBuilder;
 import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
 import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
 
