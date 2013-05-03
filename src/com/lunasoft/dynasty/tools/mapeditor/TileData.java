@@ -1,16 +1,30 @@
 package com.lunasoft.dynasty.tools.mapeditor;
 
 import java.io.Serializable;
+import java.util.Set;
+
+import com.google.common.collect.ImmutableSet;
 
 public class TileData implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
 	public enum ReliefType {
-		WATER,
-		PLAINS,
-		HILLS,
-		MOUNTAINS
+		WATER(VegetationType.NONE),
+		PLAINS(VegetationType.DESERT, VegetationType.FLOOD_PLAIN, VegetationType.FOREST,
+				VegetationType.GRASSLAND, VegetationType.MARSH),
+		HILLS(VegetationType.DESERT, VegetationType.FOREST, VegetationType.GRASSLAND),
+		MOUNTAINS(VegetationType.NONE);
+
+		private Set<VegetationType> validVegetationTypes;
+
+		private ReliefType(VegetationType... validVegetationTypes) {
+			this.validVegetationTypes = ImmutableSet.copyOf(validVegetationTypes);
+		}
+
+		public Set<VegetationType> getValidVegetationTypes() {
+			return validVegetationTypes;
+		}
 	}
 
 	public enum VegetationType {

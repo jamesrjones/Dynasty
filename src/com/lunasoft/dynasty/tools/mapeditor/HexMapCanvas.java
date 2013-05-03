@@ -18,6 +18,8 @@ import org.eclipse.swt.widgets.Composite;
 import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
 import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
 import com.lunasoft.dynasty.tools.mapeditor.icons.BaseIcon;
+import com.lunasoft.dynasty.tools.mapeditor.icons.Desert;
+import com.lunasoft.dynasty.tools.mapeditor.icons.Forest;
 import com.lunasoft.dynasty.tools.mapeditor.icons.Grassland;
 
 public class HexMapCanvas extends Canvas {
@@ -109,7 +111,6 @@ public class HexMapCanvas extends Canvas {
 		if (gameMap == null) {
 			return null;
 		}
-		System.out.println("createImage()");
 		int width = (int) hexGridDimensions.getTotalWidth();
 		int height = (int) hexGridDimensions.getTotalHeight();
 		Image image = new Image(getDisplay(), width, height);
@@ -145,6 +146,10 @@ public class HexMapCanvas extends Canvas {
 		switch (vegetationType) {
 		case NONE:
 			return null;
+		case DESERT:
+			return new Desert();
+		case FOREST:
+			return new Forest();
 		case GRASSLAND:
 			return new Grassland();
 		}

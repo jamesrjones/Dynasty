@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Map;
 
 import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -26,6 +27,8 @@ import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.lunasoft.dynasty.tools.mapeditor.TileData.ReliefType;
 import com.lunasoft.dynasty.tools.mapeditor.TileData.VegetationType;
 
@@ -33,6 +36,8 @@ public class MapEditor {
 
 	private HexMapCanvas hexMapCanvas;
 	private Canvas previewCanvas;
+	private Map<VegetationType, Button> vegetationTypeButtons
+			= Maps.newEnumMap(VegetationType.class);
 
 	/**
 	 * @param args
@@ -156,10 +161,9 @@ public class MapEditor {
 		vegetationControls.setLayout(new GridLayout(1, false));
 
 		addVegetationButton(vegetationControls, "None", VegetationType.NONE).setSelection(true);
-		addVegetationButton(vegetationControls, "Grassland", VegetationType.GRASSLAND);
-
-//		new Label(reliefControls, SWT.PUSH | SWT.SEPARATOR | SWT.HORIZONTAL)
-//				.setLayoutData(new GridDataBuilder().withHorizontalSpan(2).build());
+		addVegetationButton(vegetationControls, "Desert", VegetationType.DESERT).setEnabled(false);
+		addVegetationButton(vegetationControls, "Forest", VegetationType.FOREST).setEnabled(false);
+		addVegetationButton(vegetationControls, "Grassland", VegetationType.GRASSLAND).setEnabled(false);
 
 // TODO: do this later
 //		addMoreRowsButton(controls, "+2 Rows Top", false);
@@ -186,6 +190,25 @@ public class MapEditor {
 		button.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				Button selectedButton = null;
+				for (VegetationType vegetationType : VegetationType.values()) {
+					Button button = vegetationTypeButtons.get(vegetationType);
+					if (button == null) {
+						continue;
+					}
+					if (button.getSelection()) {
+						selectedButton = button;
+					}
+					button.setEnabled(
+							reliefType.getValidVegetationTypes().contains(vegetationType));
+				}
+				if (selectedButton != null && !selectedButton.getEnabled()) {
+					selectedButton.setSelection(false);
+					VegetationType firstValidVegetationType = Iterables.getFirst(
+							reliefType.getValidVegetationTypes(), null);
+					vegetationTypeButtons.get(firstValidVegetationType).setSelection(true);
+					hexMapCanvas.setSelectedVegetationType(firstValidVegetationType);
+				}
 				hexMapCanvas.setSelectedReliefType(reliefType);
 				previewCanvas.redraw();
 			}
@@ -204,6 +227,7 @@ public class MapEditor {
 				previewCanvas.redraw();
 			}
 		});
+		vegetationTypeButtons.put(vegetationType, button);
 		return button;
 	}
 
