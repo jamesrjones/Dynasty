@@ -20,7 +20,7 @@ public class SingleCellModelRunner<S extends CellState, T extends SingleCellMode
 		while (numIterations < getMaxIterations()) {
 			singleCellModel.step();
 			++numIterations;
-			System.out.println("STATE at TIME = " + numIterations);
+//			System.out.println("STATE at TIME = " + numIterations);
 			System.out.println(singleCellModel.getCurrentState());
 		}
 	}
